@@ -1,6 +1,7 @@
 package br.ce.wcaquino.servicos;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import br.ce.wcaquino.entidades.Usuario;
@@ -8,6 +9,7 @@ import br.ce.wcaquino.entidades.Usuario;
 public class AssertTest {
 	
 	@Test
+	@Ignore
 	public void Test() {
 		Assert.assertTrue(true);
 		Assert.assertFalse(false);

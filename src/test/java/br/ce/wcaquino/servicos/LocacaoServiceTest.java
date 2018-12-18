@@ -1,8 +1,10 @@
 package br.ce.wcaquino.servicos;
 
+import static Matchers.MatchersProprios.caiNumaSegunda;
+import static Matchers.MatchersProprios.ehHoje;
+import static Matchers.MatchersProprios.ehHojeComDiferencaDias;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -28,15 +30,15 @@ import br.ce.wcaquino.utils.DataUtils;
 public class LocacaoServiceTest {
 
 	private LocacaoService service;
-	
+
 	private static int contador = 0;
-	
+
 	@Rule
 	public ErrorCollector error = new ErrorCollector();
 
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
-	
+
 	@Before
 	public void setUp() {
 		service = new LocacaoService();
@@ -58,8 +60,8 @@ public class LocacaoServiceTest {
 
 		// verificacao
 		error.checkThat(locacao.getValor(), is(equalTo(5.0)));
-		error.checkThat(DataUtils.isMesmaData(locacao.getDataLocacao(), new Date()), is(true));
-		error.checkThat(DataUtils.isMesmaData(locacao.getDataRetorno(), DataUtils.obterDataComDiferencaDias(1)), is(true));
+		error.checkThat(locacao.getDataLocacao(), ehHoje());
+		error.checkThat(locacao.getDataRetorno(), ehHojeComDiferencaDias(1));
 	}
 
 	@Test(expected = FilmeSemEstoqueException.class)
@@ -96,21 +98,21 @@ public class LocacaoServiceTest {
 		exception.expectMessage("Filme vazio");
 		service.alugarFilme(usuario, null);
 	}
-	
+
 	@Test
+    @Ignore("Não é sábado")
 	public void deveDevolverNaSegundaAoAlugarNoSabado() throws FilmeSemEstoqueException, LocadoraException {
 		Assume.assumeTrue(DataUtils.verificarDiaSemana(new Date(), Calendar.SATURDAY));
 
 		// cenario
 		Usuario usuario = new Usuario("Usuario");
 		List<Filme> filmes = Arrays.asList(new Filme("Filme 1", 1, 5.0));
-		
+
 		//acao
 		Locacao locacao = service.alugarFilme(usuario, filmes);
-		
+
 		//verificacao
-		boolean ehSegunda = DataUtils.verificarDiaSemana(locacao.getDataRetorno(), Calendar.MONDAY);
-		Assert.assertTrue(ehSegunda);
+		Assert.assertThat(locacao.getDataRetorno(), caiNumaSegunda());
 	}
 
 }
