@@ -1,5 +1,6 @@
 package br.ce.wcaquino.servicos;
 
+import static br.ce.wcaquino.builders.FilmeBuilder.umFile;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -12,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import br.ce.wcaquino.builders.FilmeBuilder;
 import br.ce.wcaquino.entidades.Filme;
 import br.ce.wcaquino.entidades.Locacao;
 import br.ce.wcaquino.entidades.Usuario;
@@ -37,13 +39,13 @@ public class CalculoValorLocacaoTest {
         service = new LocacaoService();
     }
 
-    private static Filme filme1 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme2 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme3 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme4 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme5 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme6 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme7 = new Filme("Filme 1", 2, 4.0);
+    private static Filme filme1 = umFile().agora();
+    private static Filme filme2 = umFile().agora();
+    private static Filme filme3 = umFile().agora();
+    private static Filme filme4 = umFile().agora();
+    private static Filme filme5 = umFile().agora();
+    private static Filme filme6 = umFile().agora();
+    private static Filme filme7 = umFile().agora();
 
     @Parameterized.Parameters(name = "{2}")
     public static Collection<Object[]> getParametros(){

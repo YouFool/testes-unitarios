@@ -1,4 +1,4 @@
-package Suites;
+package br.ce.wcaquino.suites;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
