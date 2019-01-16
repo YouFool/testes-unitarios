@@ -2,12 +2,17 @@ package br.ce.wcaquino.servicos;
 
 import static br.ce.wcaquino.builders.FilmeBuilder.umFile;
 import static br.ce.wcaquino.builders.FilmeBuilder.umFilmeSemEstoque;
+import static br.ce.wcaquino.builders.LocacaoBuilder.umaLocacao;
 import static br.ce.wcaquino.builders.UsuarioBuilder.umUsuario;
 import static br.ce.wcaquino.matchers.MatchersProprios.caiNumaSegunda;
 import static br.ce.wcaquino.matchers.MatchersProprios.ehHoje;
 import static br.ce.wcaquino.matchers.MatchersProprios.ehHojeComDiferencaDias;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -15,6 +20,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -23,8 +29,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
+import br.ce.wcaquino.builders.UsuarioBuilder;
 import br.ce.wcaquino.daos.LocacaoDAO;
 import br.ce.wcaquino.entidades.Filme;
 import br.ce.wcaquino.entidades.Locacao;
@@ -35,11 +45,17 @@ import br.ce.wcaquino.utils.DataUtils;
 
 public class LocacaoServiceTest {
 
+	@InjectMocks
 	private LocacaoService service;
 			
+	@Mock
 	private SPCService spcService;
 	
-	private LocacaoDAO locacaoDAO; 
+	@Mock
+	private LocacaoDAO locacaoDAO;
+	
+	@Mock
+	private EmailService emailService;
 
 	@Rule
 	public ErrorCollector error = new ErrorCollector();
@@ -49,11 +65,7 @@ public class LocacaoServiceTest {
 
 	@Before
 	public void setUp() {
-		service = new LocacaoService();
-		locacaoDAO = Mockito.mock(LocacaoDAO.class);
-		service.setLocacaoDAO(locacaoDAO);
-		spcService = Mockito.mock(SPCService.class);
-		service.setSPCService(spcService);
+		MockitoAnnotations.initMocks(this);
 	}
 
 	@Test
@@ -125,18 +137,48 @@ public class LocacaoServiceTest {
 	}
 	
 	@Test
-	public void naoDeveAlugarFilmeParaNegativadoSPC() throws FilmeSemEstoqueException, LocadoraException {
+	public void naoDeveAlugarFilmeParaNegativadoSPC() throws FilmeSemEstoqueException {
 		//cenario
 		Usuario usuario = umUsuario().agora();
 		List<Filme> filmes = Arrays.asList(umFile().agora());
 		
-		when(spcService.possuiNegativacao(usuario)).thenReturn(true);
-		
-		exception.expect(LocadoraException.class);
-		exception.expectMessage("Usuário Negativado");
+		when(spcService.possuiNegativacao(Mockito.any(Usuario.class))).thenReturn(true);
 		
 		//acao
-		service.alugarFilme(usuario, filmes);
+		try {
+			service.alugarFilme(usuario, filmes);
+			Assert.fail();
+		} catch (LocadoraException e) {
+			Assert.assertThat(e.getMessage(), CoreMatchers.is("Usuário Negativado"));
+		}
+		
+		// verificacao
+		verify(spcService).possuiNegativacao(usuario);
+	}
+	
+	@Test
+	public void deveEnviarEmailParaLocacoesAtrasadas(){
+		// cenario
+		Usuario usuario = UsuarioBuilder.umUsuario().agora();
+		Usuario usuario2 = UsuarioBuilder.umUsuario().comNome("Paulão").agora();
+		Usuario usuario3 = UsuarioBuilder.umUsuario().comNome("Paulinha").agora();
+		List<Locacao> locacoes = Arrays.asList( //
+				umaLocacao().atrasada().comUsuario(usuario).agora(), //
+				umaLocacao().comUsuario(usuario2).agora(), //
+				umaLocacao().atrasada().comUsuario(usuario3).agora(),
+				umaLocacao().atrasada().comUsuario(usuario3).agora()
+		);
+		when(locacaoDAO.obterLocacoesPendentes()).thenReturn(locacoes);
+		
+		// acao
+		service.notificarAtrasos();
+		
+		// validacao
+		verify(emailService, times(3)).notificarAtraso(Mockito.any(Usuario.class));
+		verify(emailService).notificarAtraso(usuario);
+		verify(emailService, Mockito.atLeastOnce()).notificarAtraso(usuario3);
+		verify(emailService, never()).notificarAtraso(usuario2);
+		verifyNoMoreInteractions(emailService);
 	}
 
 }
