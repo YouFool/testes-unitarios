@@ -22,7 +22,7 @@ public class LocacaoBuilder {
 		locacao.setUsuario(UsuarioBuilder.umUsuario().agora());
 		locacao.setDataLocacao(new Date());
 		locacao.setDataRetorno(DataUtils.adicionarDias(locacao.getDataLocacao(), 7));
-		locacao.setValor(100D);
+		locacao.setValor(4D);
 		locacao.setFilmes(Arrays.asList(FilmeBuilder.umFile().agora()));
 		builder.locacao = locacao;
 		return builder;

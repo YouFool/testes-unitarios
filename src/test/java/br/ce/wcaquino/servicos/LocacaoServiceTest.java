@@ -9,6 +9,7 @@ import static br.ce.wcaquino.matchers.MatchersProprios.ehHoje;
 import static br.ce.wcaquino.matchers.MatchersProprios.ehHojeComDiferencaDias;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -137,7 +139,7 @@ public class LocacaoServiceTest {
 	}
 	
 	@Test
-	public void naoDeveAlugarFilmeParaNegativadoSPC() throws FilmeSemEstoqueException {
+	public void naoDeveAlugarFilmeParaNegativadoSPC() throws Exception {
 		//cenario
 		Usuario usuario = umUsuario().agora();
 		List<Filme> filmes = Arrays.asList(umFile().agora());
@@ -179,6 +181,40 @@ public class LocacaoServiceTest {
 		verify(emailService, Mockito.atLeastOnce()).notificarAtraso(usuario3);
 		verify(emailService, never()).notificarAtraso(usuario2);
 		verifyNoMoreInteractions(emailService);
+	}
+	
+	@Test
+	public void deveTratarErrosSPC() throws Exception {
+		// cenario
+		Usuario usuario = umUsuario().agora();
+		List<Filme> filmes = Arrays.asList(umFile().agora());
+		
+		when(spcService.possuiNegativacao(usuario)).thenThrow(new Exception("Problemas com SPC, tente novamente"));
+		
+		// validacao
+		exception.expect(LocadoraException.class);
+		exception.expectMessage("Problemas com SPC, tente novamente");
+		
+		// acao
+		service.alugarFilme(usuario, filmes);
+	}
+	
+	@Test
+	public void deveProrrogarUmaLocacao() {
+		// cenario
+		Locacao locacao = umaLocacao().agora();
+		
+		// acao
+		service.prorrogarLocacao(locacao, 3);
+		
+		// validacao
+		ArgumentCaptor<Locacao> argCapt = ArgumentCaptor.forClass(Locacao.class);
+		Mockito.verify(locacaoDAO).salvar(argCapt.capture());
+		Locacao locacaoRetornada = argCapt.getValue();
+		
+		error.checkThat(locacaoRetornada.getValor(), is(12.0));
+		error.checkThat(locacaoRetornada.getDataLocacao(), ehHoje());
+		error.checkThat(locacaoRetornada.getDataRetorno(), ehHojeComDiferencaDias(3));
 	}
 
 }
