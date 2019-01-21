@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -29,16 +30,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.Spy;
 
 import br.ce.wcaquino.builders.UsuarioBuilder;
 import br.ce.wcaquino.daos.LocacaoDAO;
@@ -49,10 +46,9 @@ import br.ce.wcaquino.exceptions.FilmeSemEstoqueException;
 import br.ce.wcaquino.exceptions.LocadoraException;
 import br.ce.wcaquino.utils.DataUtils;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({LocacaoService.class})
 public class LocacaoServiceTest {
 
+	@Spy
 	@InjectMocks
 	private LocacaoService service;
 			
@@ -74,7 +70,6 @@ public class LocacaoServiceTest {
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		service = PowerMockito.spy(service);
 	}
 
 	@Test
@@ -82,14 +77,8 @@ public class LocacaoServiceTest {
 		// cenario
 		Usuario usuario = umUsuario().agora();
 		List<Filme> filmes = Arrays.asList(umFile().comValor(5.0).agora());
-		
-		//PowerMockito.whenNew(Date.class).withNoArguments().thenReturn(DataUtils.obterData(28, 4, 2017));
-		Calendar calendar = Calendar.getInstance();
-		calendar.set(Calendar.DAY_OF_MONTH, 28);
-		calendar.set(Calendar.MONTH, Calendar.APRIL);
-		calendar.set(Calendar.YEAR, 2017);
-		PowerMockito.mockStatic(Calendar.class);
-		PowerMockito.when(Calendar.getInstance()).thenReturn(calendar);
+
+		Mockito.doReturn(DataUtils.obterData(28, 4, 2017)).when(service).obterData();
 
 		// acao
 		Locacao locacao = service.alugarFilme(usuario, filmes);
@@ -143,22 +132,13 @@ public class LocacaoServiceTest {
 		Usuario usuario = umUsuario().agora();
 		List<Filme> filmes = Arrays.asList(umFile().agora());
 
-		//PowerMockito.whenNew(Date.class).withNoArguments().thenReturn(DataUtils.obterData(19, 1, 2019));
-		Calendar calendar = Calendar.getInstance();
-		calendar.set(Calendar.DAY_OF_MONTH, 29);
-		calendar.set(Calendar.MONTH, Calendar.APRIL);
-		calendar.set(Calendar.YEAR, 2017);
-		PowerMockito.mockStatic(Calendar.class);
-		PowerMockito.when(Calendar.getInstance()).thenReturn(calendar);
+		Mockito.doReturn(DataUtils.obterData(29, 4, 2017)).when(service).obterData();
 		
 		// acao
 		Locacao locacao = service.alugarFilme(usuario, filmes);
 
 		// verificacao
 		Assert.assertThat(locacao.getDataRetorno(), caiNumaSegunda());
-		//PowerMockito.verifyNew(Date.class, times(2)).withNoArguments();
-		PowerMockito.verifyStatic(times(2));
-		Calendar.getInstance();
 	}
 	
 	@Test
@@ -241,27 +221,15 @@ public class LocacaoServiceTest {
 	}
 	
 	@Test
-	public void deveAlugarFilme_SemCalcularValor() throws Exception {
-		// cenario
-		Usuario usuario = umUsuario().agora();
-		List<Filme> filmes = Arrays.asList(umFile().agora());
-		PowerMockito.doReturn(1.0).when(service, "calcularValorLocacao", filmes);
-		
-		// acao
-		Locacao locacao = service.alugarFilme(usuario, filmes);
-		
-		// verificacao
-		assertThat(locacao.getValor(), is(1.0));
-		PowerMockito.verifyPrivate(service).invoke("calcularValorLocacao", filmes);
-	}
-	
-	@Test
 	public void deveCalcularValorLocacao() throws Exception {
 		// cenario
 		List<Filme> filmes = Arrays.asList(umFile().agora());
 		
 		// acao
-		Double valor = (Double) Whitebox.invokeMethod(service, "calcularValorLocacao", filmes);
+		Class<LocacaoService> clazz = LocacaoService.class;
+		Method metodo = clazz.getDeclaredMethod("calcularValorLocacao", List.class);
+		metodo.setAccessible(true);
+		Double valor = (Double) metodo.invoke(service, filmes);
 		
 		// verificacao
 		assertThat(valor, is(4.0));
