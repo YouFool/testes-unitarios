@@ -5,13 +5,13 @@ import org.hamcrest.TypeSafeMatcher;
 
 import java.util.Date;
 
-public class DiaSemanaMatcher extends TypeSafeMatcher <Date> {
+public class DiaSemanaMatcher extends TypeSafeMatcher<Date> {
 
-    public void describeTo(Description description) {
+	public void describeTo(Description description) {
 
-    }
+	}
 
-    protected boolean matchesSafely(Date item) {
-        return false;
-    }
+	protected boolean matchesSafely(Date item) {
+		return false;
+	}
 }

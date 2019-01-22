@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,35 +29,47 @@ import br.ce.wcaquino.exceptions.LocadoraException;
 public class CalculoValorLocacaoTest {
 
 	@InjectMocks
-    private LocacaoService service;
-    
+	private LocacaoService service;
+
 	@Mock
-    private LocacaoDAO locacaoDAO;
-    
+	private LocacaoDAO locacaoDAO;
+
 	@Mock
-    private SPCService spcService;
+	private SPCService spcService;
 
-    @Parameterized.Parameter
-    public  List<Filme> filmes;
+	@Parameterized.Parameter
+	public List<Filme> filmes;
 
-    @Parameterized.Parameter(value=1)
-    public Double valorLocacao;
+	@Parameterized.Parameter(value = 1)
+	public Double valorLocacao;
 
-    @Parameterized.Parameter(value = 2)
-    public String cenario;
+	@Parameterized.Parameter(value = 2)
+	public String cenario;
 
-    @Before
-    public void setup() {
-    	MockitoAnnotations.initMocks(this);
-    }
+	@Before
+	public void setup() {
+		MockitoAnnotations.initMocks(this);
+		System.out.println("Iniciando 3...");
+		CalculadoraTest.ordem.append("3");
+	}
 
-    private static Filme filme1 = umFile().agora();
-    private static Filme filme2 = umFile().agora();
-    private static Filme filme3 = umFile().agora();
-    private static Filme filme4 = umFile().agora();
-    private static Filme filme5 = umFile().agora();
-    private static Filme filme6 = umFile().agora();
-    private static Filme filme7 = umFile().agora();
+	@After
+	public void tearDown() {
+		System.out.println("finalizando 3...");
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		System.out.println(CalculadoraTest.ordem.toString());
+	}
+
+	private static Filme filme1 = umFile().agora();
+	private static Filme filme2 = umFile().agora();
+	private static Filme filme3 = umFile().agora();
+	private static Filme filme4 = umFile().agora();
+	private static Filme filme5 = umFile().agora();
+	private static Filme filme6 = umFile().agora();
+	private static Filme filme7 = umFile().agora();
 
     @Parameterized.Parameters(name = "{2}")
     public static Collection<Object[]> getParametros(){
@@ -69,17 +83,18 @@ public class CalculoValorLocacaoTest {
         });
     }
 
-    @Test
-    public void deveCalcularValorLocacaoConsiderandoDescontos() throws FilmeSemEstoqueException, LocadoraException {
-        //cenario
-        Usuario usuario = new Usuario("Usuario 1");
+	@Test
+	public void deveCalcularValorLocacaoConsiderandoDescontos()
+			throws FilmeSemEstoqueException, LocadoraException, InterruptedException {
+		// cenario
+		Usuario usuario = new Usuario("Usuario 1");
 
-        //acao
-        Locacao locacao = service.alugarFilme(usuario, filmes);
+		// acao
+		Locacao locacao = service.alugarFilme(usuario, filmes);
 
-        //verificacao
-        assertThat(locacao.getValor(), is(valorLocacao));
-    }
+		// verificacao
+		assertThat(locacao.getValor(), is(valorLocacao));
+	}
 
 
 }

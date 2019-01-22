@@ -15,7 +15,7 @@ import br.ce.wcaquino.exceptions.LocadoraException;
 import br.ce.wcaquino.utils.DataUtils;
 
 public class LocacaoService {
-	
+
 	private LocacaoDAO locacaoDAO;
 	private SPCService spcService;
 	private EmailService emailService;
@@ -29,20 +29,19 @@ public class LocacaoService {
 			throw new LocadoraException("Filme vazio");
 		}
 
-		
 		for (Filme filme : filmes) {
 			if (filme.getEstoque() == 0) {
 				throw new FilmeSemEstoqueException();
 			}
 		}
-		
+
 		boolean negativado;
 		try {
-			 negativado = spcService.possuiNegativacao(usuario);
+			negativado = spcService.possuiNegativacao(usuario);
 		} catch (Exception e) {
 			throw new LocadoraException("Problemas com SPC, tente novamente");
 		}
-		
+
 		if (negativado) {
 			throw new LocadoraException("Usuário Negativado");
 		}
@@ -56,11 +55,11 @@ public class LocacaoService {
 		// Entrega no dia seguinte
 		Date dataEntrega = obterData();
 		dataEntrega = adicionarDias(dataEntrega, 1);
-		
+
 		if (DataUtils.verificarDiaSemana(dataEntrega, Calendar.SUNDAY)) {
 			dataEntrega = adicionarDias(dataEntrega, 1);
 		}
-		
+
 		locacao.setDataRetorno(dataEntrega);
 
 		// Salvando a locacao...
@@ -75,7 +74,7 @@ public class LocacaoService {
 
 	private Double calcularValorLocacao(List<Filme> filmes) {
 		Double valorTotal = 0d;
-		for (int i =0; i< filmes.size(); i++) {
+		for (int i = 0; i < filmes.size(); i++) {
 			Filme filme = filmes.get(i);
 			Double valorFilme = filme.getPrecoLocacao();
 			switch (i) {
@@ -94,12 +93,12 @@ public class LocacaoService {
 			default:
 				break;
 			}
-			
+
 			valorTotal += valorFilme;
 		}
 		return valorTotal;
 	}
-	
+
 	public void notificarAtrasos() {
 		List<Locacao> locacoes = locacaoDAO.obterLocacoesPendentes();
 		for (Locacao locacao : locacoes) {
@@ -108,7 +107,7 @@ public class LocacaoService {
 			}
 		}
 	}
-	
+
 	public void prorrogarLocacao(Locacao locacao, int dias) {
 		Locacao novaLocacao = new Locacao();
 		novaLocacao.setUsuario(locacao.getUsuario());
@@ -118,5 +117,5 @@ public class LocacaoService {
 		novaLocacao.setValor(locacao.getValor() * dias);
 		locacaoDAO.salvar(novaLocacao);
 	}
-	
+
 }
